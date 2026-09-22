@@ -37,10 +37,16 @@ class IngestionService:
 
         try:
             # 3. Create document record
+            document_metadata = {
+                "file_type": path.suffix.lower().lstrip("."),
+                "source_type": "upload",
+            }
+
             document = document_service.create_document(
                 db=db,
                 title=path.stem,
                 source=str(path),
+                document_metadata=document_metadata,
             )
 
             # 4. Generate embeddings and save chunks
