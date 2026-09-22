@@ -10,10 +10,12 @@ class DocumentService:
         db: Session,
         title: str,
         source: str,
+        document_metadata: dict | None = None,
     ) -> Document:
         document = Document(
             title=title,
             source=source,
+            document_metadata=document_metadata,
         )
 
         db.add(document)

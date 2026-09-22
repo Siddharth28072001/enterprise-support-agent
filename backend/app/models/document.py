@@ -1,7 +1,9 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy import Computed, DateTime, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from pgvector.sqlalchemy import Vector
 
 from app.database import Base
@@ -13,6 +15,13 @@ class Document(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     source: Mapped[str] = mapped_column(String(500), nullable=False)
+
+    document_metadata: Mapped[dict | None] = mapped_column(
+        "metadata",
+        JSONB,
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
@@ -29,12 +38,29 @@ class DocumentChunk(Base):
     __tablename__ = "document_chunks"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+
     document_id: Mapped[int] = mapped_column(
         ForeignKey("documents.id"),
         nullable=False,
     )
-    content: Mapped[str] = mapped_column(Text, nullable=False)
-    chunk_index: Mapped[int] = mapped_column(nullable=False)
+
+    content: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    content_tsv: Mapped[str | None] = mapped_column(
+        TSVECTOR,
+        Computed(
+            "to_tsvector('english', content)",
+            persisted=True,
+        ),
+        nullable=True,
+    )
+
+    chunk_index: Mapped[int] = mapped_column(
+        nullable=False,
+    )
 
     embedding: Mapped[list[float] | None] = mapped_column(
         Vector(768),
